@@ -1,7 +1,29 @@
-const API_URL = 'http://localhost:8000/api/bookings';
+const API_URL = '/api/bookings';
 
-let allBookings = [];
+/*Auth guard: redirect to login if no token*/
+function getToken() {
+  return sessionStorage.getItem('auth_token');
+}
+function getUser() {
+  return sessionStorage.getItem('auth_user');
+}
 
+if (!getToken()) {
+  window.location.replace('login.html');
+}
+
+/*Inject auth headers into every fetch*/
+function authFetch(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      'Authorization': `Basic ${getToken()}`,
+    },
+  });
+}
+
+/*DOM*/
 const tbody       = document.getElementById('tbody');
 const searchEl    = document.getElementById('search');
 const countPill   = document.getElementById('count-pill');
@@ -10,21 +32,36 @@ const lastUpdated = document.getElementById('last-updated');
 const cardFooter  = document.getElementById('card-footer');
 const tableWrap   = document.getElementById('table-wrap');
 
+let allBookings = [];
+
+/*Load bookings*/
 async function loadBookings() {
   showState('loading');
   try {
-    const res = await fetch(API_URL);
-    if (!res.ok) throw new Error(`Сервер вернул ${res.status}`);
+    const res = await authFetch(`${API_URL}?limit=500`);
+
+    if (res.status === 401) {
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_user');
+      window.location.replace('login.html');
+      return;
+    }
+
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
     allBookings = await res.json();
-    lastUpdated.textContent = new Date().toLocaleTimeString('ru-RU');
+    lastUpdated.textContent = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit', minute: '2-digit'
+    });
     renderRows(allBookings);
   } catch (err) {
     showState('error');
     document.getElementById('error-text').textContent =
-      `Не удалось подключиться к API: ${err.message}`;
+      `Could not connect to API: ${err.message}`;
   }
 }
 
+/*Render rows*/
 function renderRows(list) {
   if (list.length === 0) {
     showState(searchEl.value.trim() ? 'empty-search' : 'empty');
@@ -44,10 +81,10 @@ function renderRows(list) {
   `).join('');
 
   countPill.textContent = list.length;
-  footerText.textContent = `Показано ${list.length} из ${allBookings.length} заявок`;
+  footerText.textContent = `Showing ${list.length} of ${allBookings.length} requests`;
 }
 
-//States
+/*States*/
 function showState(state) {
   document.getElementById('state-loading').hidden = state !== 'loading';
   document.getElementById('state-empty').hidden   = !['empty', 'empty-search'].includes(state);
@@ -55,9 +92,10 @@ function showState(state) {
   tableWrap.hidden  = state !== 'data';
   cardFooter.hidden = state !== 'data';
 
-  document.querySelector('#state-empty p').textContent = state === 'empty-search'
-    ? 'Ничего не найдено по вашему запросу.'
-    : 'Заявок пока нет.';
+  document.querySelector('#state-empty p').textContent =
+    state === 'empty-search'
+      ? 'No results match your search'
+      : 'No repair requests yet';
 
   if (state !== 'data') {
     tbody.innerHTML = '';
@@ -65,7 +103,7 @@ function showState(state) {
   }
 }
 
-//Search
+/*Search*/
 searchEl.addEventListener('input', function () {
   const q = this.value.toLowerCase().trim();
   if (!q) { renderRows(allBookings); return; }
@@ -78,12 +116,19 @@ searchEl.addEventListener('input', function () {
   );
 });
 
-//Refresh
+/*Refresh*/
 document.getElementById('btn-refresh').addEventListener('click', () => {
   searchEl.value = '';
   loadBookings();
 });
 document.getElementById('retry-btn').addEventListener('click', loadBookings);
+
+/*Sign out*/
+document.getElementById('btn-signout').addEventListener('click', () => {
+  sessionStorage.removeItem('auth_token');
+  sessionStorage.removeItem('auth_user');
+  window.location.replace('login.html');
+});
 
 //Helpers
 function esc(s) {
@@ -94,8 +139,15 @@ function esc(s) {
 
 function formatDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short', year: 'numeric' })
-    + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })
+    + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+/* ── Show logged-in user in header ── */
+const AUTH_USER = getUser();
+if (AUTH_USER) {
+  const userEl = document.getElementById('header-user');
+  if (userEl) userEl.textContent = AUTH_USER;
 }
 
 //Init

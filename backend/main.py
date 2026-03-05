@@ -14,9 +14,10 @@ app = FastAPI(
 # cors
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # in prod replace with a specific domain
+    allow_origins=["http://localhost", "http://localhost:80"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 #routers

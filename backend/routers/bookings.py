@@ -3,6 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from auth import require_admin
 from database import get_db
 from orm_models import Booking
 from models import BookingRequest, BookingResponse
@@ -51,6 +52,7 @@ def list_bookings(
     offset: int = Query(default=0,   ge=0,          description="Сколько пропустить"),
     search: str = Query(default="",                  description="Поиск по имени / телефону"),
     db: Session = Depends(get_db),
+    _admin: str = Depends(require_admin),
 ):
     query = db.query(Booking)
 
@@ -78,6 +80,7 @@ def list_bookings(
 def get_booking(
     booking_id: int,
     db: Session = Depends(get_db),
+    _admin: str = Depends(require_admin),
 ):
     record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not record:
