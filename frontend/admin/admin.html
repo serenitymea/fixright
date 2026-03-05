@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FixRight — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-logo">
+      Fix<em>Right</em>
+      <span class="header-tag">Admin</span>
+    </div>
+    <a href="/" class="header-back">← Back to website</a>
+  </header>
+
+  <main class="page">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h1>Repair Requests</h1>
+        <p>All requests submitted via the website form</p>
+      </div>
+      <div class="toolbar-right">
+        <span class="count-pill" id="count-pill">…</span>
+        <input
+          type="search"
+          class="search"
+          id="search"
+          placeholder="Search by name or phone…"
+        />
+        <button class="btn btn-outline" id="btn-refresh">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-scroll" id="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Problem Description</th>
+              <th>Request Date</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="state" id="state-loading">
+        <p>Loading requests…</p>
+      </div>
+      <div class="state" id="state-empty" hidden>
+        <p>No requests yet.</p>
+      </div>
+      <div class="state" id="state-error" hidden>
+        <p id="error-text">Failed to load requests.</p>
+        <span class="retry" id="retry-btn">Try again</span>
+      </div>
+
+      <div class="card-footer" id="card-footer" hidden>
+        <span id="footer-text"></span>
+        <span>Updated: <span id="last-updated">—</span></span>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>
